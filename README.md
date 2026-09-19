@@ -1,6 +1,6 @@
 # Blackdrop
 
-[![Tip with X Money](tip-with-x-money.png)](https://x.com/scottito22)
+[![Tip with X Money](tip-with-x-money.svg)](https://x.com/scottito22)
 
 Blackdrop brings the nostalgia of classic Winamp visualizations to Omarchy as a modern fullscreen listen mode for any display. Its music-reactive motion, true-black silent state, and moving logo are OLED-friendly, so an OLED can stay on while you listen without parking static player chrome on the panel.
 
