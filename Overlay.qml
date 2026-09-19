@@ -28,7 +28,7 @@ Item {
   property bool showPresetInfo: false
 
   function startService() {
-    if (session && session.startSession) session.startSession()
+    if (session && session.startSession) session.startSession(activeOutput)
     else if (opened) serviceRetry.restart()
   }
 

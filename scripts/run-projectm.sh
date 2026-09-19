@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 preset_index="${1:-0}"
+output_name="${2:-}"
 [[ "$preset_index" =~ ^[0-9]+$ ]] || preset_index=0
 child=""
 helper=""
@@ -17,6 +18,9 @@ cleanup() {
   fi
 }
 trap cleanup TERM INT EXIT
+
+fps="$("$script_dir/set_projectm_fps.py" "$output_name")"
+printf 'Blackdrop: projectM FPS=%s output=%s\n' "$fps" "${output_name:-focused}" >&2
 
 projectM-pulseaudio &
 child=$!

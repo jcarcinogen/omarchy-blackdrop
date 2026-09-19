@@ -17,6 +17,7 @@ Item {
   property int beatFlashRemaining: 0
   property double nextLogoAtMs: 0
   property string sinkMonitor: ""
+  property string targetOutput: ""
   property string lastError: ""
   readonly property var presetNames: [
     "EoS - glowsticks v2 05 and proton lights (Krash beat code)",
@@ -44,7 +45,8 @@ Item {
     nextLogoAtMs = Date.now() + 210000 + Math.floor(Math.random() * 60001)
   }
 
-  function startSession() {
+  function startSession(outputName) {
+    targetOutput = String(outputName || "")
     sessionEnabled = true
     lastError = ""
     if (nextLogoAtMs <= Date.now()) scheduleNextBeatLogo()
@@ -57,6 +59,7 @@ Item {
     visualizerReady = false
     presetLocked = false
     currentPresetIndex = -1
+    targetOutput = ""
     beatFlashRemaining = 0
     nextLogoAtMs = 0
     readyTimer.stop()
@@ -88,7 +91,7 @@ Item {
   function startVisualizer() {
     if (!sessionEnabled || !signalActive || visualizerProc.running) return
     if (currentPresetIndex < 0 || !presetLocked) currentPresetIndex = chooseRandomPresetIndex()
-    visualizerProc.command = [root.pluginDir + "/scripts/run-projectm.sh", String(currentPresetIndex)]
+    visualizerProc.command = [root.pluginDir + "/scripts/run-projectm.sh", String(currentPresetIndex), targetOutput]
     presetRevision++
     visualizerProc.running = true
   }

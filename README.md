@@ -40,7 +40,7 @@ Whenever the preset changes, Blackdrop shows its name and these arrow controls f
 - The curated presets use strong transient-relative audio equations: kick/drum energy drives zoom and decay flashes, while vocal-range mids/highs drive rotation, warp, and waveform scaling.
 - The pointer is hidden while Blackdrop is open.
 
-The overlay follows the focused output and its scale, resolution, and top/bottom/left/right bar placement. Rendering is capped at 60 fps.
+The overlay follows the focused output and its scale, resolution, current refresh rate, and top/bottom/left/right bar placement.
 
 ## Install
 
@@ -53,7 +53,7 @@ omarchy plugin add https://github.com/jcarcinogen/omarchy-blackdrop.git --enable
 omarchy-restart-shell
 ```
 
-The explicit setup step caps projectM at 60 fps, installs the reversible Super+Shift+B binding/window rules, and points projectM at Blackdrop’s curated presets. It never modifies `$OMARCHY_PATH` or replaces the Omarchy screensaver launcher.
+The explicit setup step installs the reversible Super+Shift+B binding/window rules and points projectM at Blackdrop’s curated presets. At each launch, Blackdrop detects the focused monitor and matches projectM’s render FPS to that monitor’s current refresh rate (60, 75, 120, 144, 165, 240 Hz, and so on). It never changes the monitor mode, modifies `$OMARCHY_PATH`, or replaces the Omarchy screensaver launcher.
 
 ## Remove
 
