@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.jcarcinogen.blackdrop",
+  "name": "Blackdrop",
+  "version": "0.1.0",
+  "author": "Scott Angel",
+  "description": "Bring the nostalgia of classic Winamp visualizations to Omarchy with fullscreen, music-reactive motion. Blackdrop covers the bar and inhibits idle so the display and its audio stay alive; silence becomes OLED-friendly true black with a drifting neon Omarchy mark.",
+  "kinds": ["service", "overlay", "bar-widget"],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "overlay": "Overlay.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Blackdrop",
+    "category": "Media",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
