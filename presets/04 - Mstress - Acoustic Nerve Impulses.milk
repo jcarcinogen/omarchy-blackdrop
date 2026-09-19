@@ -292,10 +292,10 @@ per_frame_48=y = if(beat,oldy,y);
 per_frame_49=oldy=if(beat,temp,oldy);
 per_frame_50=
 per_frame_51=monitor =y;
-per_frame_52=bd_bass=max(-0.5,min(1.5,bass_att-1));
-per_frame_53=bd_mid=max(-0.5,min(1.5,mid_att-1));
-per_frame_54=bd_treb=max(-0.5,min(1.5,treb_att-1));
-per_frame_55=zoom=zoom*(1+0.055*bd_bass);
-per_frame_56=rot=rot+0.018*bd_mid;
-per_frame_57=warp=warp+0.25*bd_treb;
-per_frame_58=wave_scale=wave_scale*(1+0.10*bd_bass);
+per_frame_52=bd_kick=max(0,min(2,bass/(bass_att+0.01)-1));
+per_frame_53=bd_voice=max(0,min(2,0.65*(mid/(mid_att+0.01)-1)+0.35*(treb/(treb_att+0.01)-1)));
+per_frame_54=zoom=zoom*(1+0.10*bd_kick);
+per_frame_55=rot=rot+0.025*bd_voice;
+per_frame_56=warp=warp+0.32*bd_voice;
+per_frame_57=wave_scale=wave_scale*(1+0.16*bd_voice+0.12*bd_kick);
+per_frame_58=decay=max(0.92,decay-0.04*bd_kick);

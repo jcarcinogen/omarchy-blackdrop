@@ -394,13 +394,13 @@ per_frame_42=
 per_frame_43=q12 = sp;
 per_frame_44=
 per_frame_45=monitor = q12;
-per_frame_46=bd_bass=max(-0.5,min(1.5,bass_att-1));
-per_frame_47=bd_mid=max(-0.5,min(1.5,mid_att-1));
-per_frame_48=bd_treb=max(-0.5,min(1.5,treb_att-1));
-per_frame_49=zoom=zoom*(1+0.055*bd_bass);
-per_frame_50=rot=rot+0.018*bd_mid;
-per_frame_51=warp=warp+0.25*bd_treb;
-per_frame_52=wave_scale=wave_scale*(1+0.10*bd_bass);
+per_frame_46=bd_kick=max(0,min(2,bass/(bass_att+0.01)-1));
+per_frame_47=bd_voice=max(0,min(2,0.65*(mid/(mid_att+0.01)-1)+0.35*(treb/(treb_att+0.01)-1)));
+per_frame_48=zoom=zoom*(1+0.10*bd_kick);
+per_frame_49=rot=rot+0.025*bd_voice;
+per_frame_50=warp=warp+0.32*bd_voice;
+per_frame_51=wave_scale=wave_scale*(1+0.16*bd_voice+0.12*bd_kick);
+per_frame_52=decay=max(0.92,decay-0.04*bd_kick);
 per_pixel_1=//zoom = pow(rad,2)+.01;
 warp_1=`
 warp_2=`shader_body
