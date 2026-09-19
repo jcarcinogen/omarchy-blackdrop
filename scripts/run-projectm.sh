@@ -21,7 +21,7 @@ trap cleanup TERM INT EXIT
 projectM-pulseaudio &
 child=$!
 (
-  "$script_dir/fullscreen-projectm.py" "$child"
+  "$script_dir/wait-projectm.py" "$child"
   sleep 0.2
   keys=()
   for ((i = 0; i <= preset_index; i++)); do keys+=(n); done

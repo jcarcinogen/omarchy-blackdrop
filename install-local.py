@@ -18,6 +18,9 @@ BLOCK = """-- BLACKDROP START
 hl.unbind("SUPER + SHIFT + B")
 o.bind("SUPER + SHIFT + B", "Blackdrop", "omarchy-shell shell toggle io.github.jcarcinogen.blackdrop '{}'")
 o.window({ class = "^projectM-pulseaudio$" }, { float = true })
+o.window({ class = "^projectM-pulseaudio$" }, { size = { "monitor_w", "monitor_h" } })
+o.window({ class = "^projectM-pulseaudio$" }, { move = { 0, 0 } })
+o.window({ class = "^projectM-pulseaudio$" }, { border_size = 0, rounding = 0 })
 o.window({ class = "^projectM-pulseaudio$" }, { opacity = "1 1", tag = "-default-opacity" })
 -- BLACKDROP END
 """
@@ -44,9 +47,9 @@ def configure_projectm() -> None:
     text, count = re.subn(r"(?m)^FPS\s*=\s*\d+.*$", "FPS  = 60                 # Frames Per Second", text, count=1)
     if count != 1:
         text += "\nFPS  = 60                 # Frames Per Second\n"
-    text, count = re.subn(r"(?m)^Fullscreen\s*=\s*\w+.*$", "Fullscreen  = true", text, count=1)
+    text, count = re.subn(r"(?m)^Fullscreen\s*=\s*\w+.*$", "Fullscreen  = false", text, count=1)
     if count != 1:
-        text += "Fullscreen  = true\n"
+        text += "Fullscreen  = false\n"
     text, count = re.subn(r"(?m)^Hard Cut Sensitivity\s*=\s*[-+0-9.]+.*$", "Hard Cut Sensitivity = 3", text, count=1)
     if count != 1:
         text += "Hard Cut Sensitivity = 3\n"
