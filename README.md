@@ -15,13 +15,30 @@ Blackdrop brings the nostalgia of classic Winamp visualizations to Omarchy as a 
 
 </details>
 
-- Click the droplet in the right side of the bar or press **Super+Shift+B**.
-- Blackdrop visualizes the PipeWire default sink through projectM on the currently focused display.
-- While open it inhibits idle, keeping the display and its audio path alive while preventing the stock screensaver and display-off path from taking over.
+## Use
+
+Start Blackdrop by clicking the **droplet** on the right side of the Omarchy bar or pressing **Super+Shift+B**. It visualizes every app mixed into the PipeWire default sink on the currently focused display.
+
+### Keyboard controls
+
+| Key | Action |
+|---|---|
+| **← Left** | Previous visualization preset |
+| **→ Right** | Next visualization preset |
+| **↑ Up** | Save/lock the current preset so it stays selected |
+| **↓ Down** | Unlock and enable **Random per song** |
+| **Escape** | Exit Blackdrop and restore the previous app’s tiled/fullscreen state |
+| **Super+Shift+B** | Toggle Blackdrop from anywhere |
+
+Whenever the preset changes, Blackdrop shows its name and these arrow controls for two seconds. Twelve presets are included; the selected preset otherwise remains unchanged for the song.
+
+## Behavior
+
+- While open, Blackdrop inhibits idle, keeping the display and its audio path alive while preventing the stock screensaver and display-off path from taking over.
 - With no sink signal it switches to the official neon-green Omarchy logo drifting on true black.
 - While music plays, the visualization is unobstructed most of the time; roughly every four minutes, the neon Omarchy mark flashes for three detected beats. projectM’s M/headphone splash is skipped automatically.
-- Twelve curated styles use transient-relative audio equations: kick/drum energy drives zoom and decay flashes, while vocal-range mids/highs drive rotation, warp, and waveform scaling. This keeps motion tied to musical changes rather than merely animating autonomously. A chosen preset remains unchanged for the song. **Left/Right** selects the previous/next style, **Up** saves (locks) it, and **Down** unlocks it and enables **Random per song**. Each change shows the preset name and arrow controls for two seconds.
-- The pointer is hidden while Blackdrop is open. Press **Escape** or **Super+Shift+B** again to stop; the previous app returns in exactly its prior tiled or fullscreen state.
+- The curated presets use strong transient-relative audio equations: kick/drum energy drives zoom and decay flashes, while vocal-range mids/highs drive rotation, warp, and waveform scaling.
+- The pointer is hidden while Blackdrop is open.
 
 The overlay follows the focused output and its scale, resolution, and top/bottom/left/right bar placement. Rendering is capped at 60 fps.
 
