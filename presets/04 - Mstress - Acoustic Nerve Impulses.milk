@@ -294,8 +294,8 @@ per_frame_50=
 per_frame_51=monitor =y;
 per_frame_52=bd_kick=max(0,min(2,bass/(bass_att+0.01)-1));
 per_frame_53=bd_voice=max(0,min(2,0.65*(mid/(mid_att+0.01)-1)+0.35*(treb/(treb_att+0.01)-1)));
-per_frame_54=zoom=zoom*(1+0.10*bd_kick);
-per_frame_55=rot=rot+0.025*bd_voice;
-per_frame_56=warp=warp+0.32*bd_voice;
-per_frame_57=wave_scale=wave_scale*(1+0.16*bd_voice+0.12*bd_kick);
-per_frame_58=decay=max(0.92,decay-0.04*bd_kick);
+per_frame_54=zoom=zoom*(1+0.30*bd_kick);
+per_frame_55=rot=rot+0.10*bd_voice+0.04*bd_kick;
+per_frame_56=warp=warp+0.90*bd_voice+0.35*bd_kick;
+per_frame_57=wave_scale=wave_scale*(1+0.60*bd_voice+0.35*bd_kick);
+per_frame_58=decay=max(0.72,decay-0.15*bd_kick-0.08*bd_voice);
