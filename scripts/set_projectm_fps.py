@@ -31,7 +31,10 @@ def choose_monitor(monitors: list[dict], requested: str) -> dict:
     return monitors[0] if monitors else {"refreshRate": 60}
 
 
-def update_config(path: Path, fps: int) -> None:
+def update_config(path: Path, fps: int) -> bool:
+    """Rewrite the FPS line in place. Returns False when projectM is not set up yet."""
+    if not path.is_file():
+        return False
     text = path.read_text()
     replacement = f"FPS  = {fps}                 # Frames Per Second"
     text, count = re.subn(r"(?m)^FPS\s*=\s*\d+.*$", replacement, text, count=1)
@@ -41,6 +44,7 @@ def update_config(path: Path, fps: int) -> None:
     temporary.write_text(text)
     temporary.chmod(path.stat().st_mode)
     temporary.replace(path)
+    return True
 
 
 def main() -> int:
@@ -48,7 +52,10 @@ def main() -> int:
     monitors = json.loads(subprocess.check_output(["hyprctl", "-j", "monitors", "all"], text=True, timeout=3))
     monitor = choose_monitor(monitors, requested)
     fps = refresh_for_monitor(monitor)
-    update_config(CONFIG, fps)
+    if not update_config(CONFIG, fps):
+        # Marketplace installs reach this before the one-time setup has run.
+        # Report the FPS and keep going rather than failing the launcher.
+        print(f"Blackdrop: {CONFIG} not found; run this plugin's setup.sh", file=sys.stderr)
     print(fps, flush=True)
     return 0
 

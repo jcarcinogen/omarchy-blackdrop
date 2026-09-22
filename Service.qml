@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Commons
 
 Item {
   id: root
@@ -40,6 +41,22 @@ Item {
   readonly property bool visualizerRunning: visualizerProc.running
   readonly property bool monitorRunning: monitorProc.running
 
+  // Read-only readiness probe (scripts/status.py). A marketplace install only
+  // clones this plugin: the projectM packages and Blackdrop's reversible local
+  // configuration are a separate, visible user action, so report that state
+  // instead of failing silently behind a black screen.
+  property var statusPayload: ({})
+  property bool statusKnown: false
+  readonly property bool ready: statusPayload.ready === true
+  readonly property bool setupRequired: statusKnown && !ready
+  readonly property var setupReasons: statusPayload.reasons ? statusPayload.reasons : []
+  readonly property string setupCommand: String(statusPayload.setup_command || "")
+  readonly property bool setupAvailable: statusPayload.setup_available === true
+  readonly property string packageStep: String(statusPayload.package_step || "")
+  readonly property string pluginVersion: String(statusPayload.version || "")
+  property bool setupLaunched: false
+  property bool copiedCommand: false
+
   function scheduleNextBeatLogo() {
     // Randomize within 3.5–4.5 minutes so it feels occasional, not clocked.
     nextLogoAtMs = Date.now() + 210000 + Math.floor(Math.random() * 60001)
@@ -49,8 +66,65 @@ Item {
     targetOutput = String(outputName || "")
     sessionEnabled = true
     lastError = ""
+    setupLaunched = false
     if (nextLogoAtMs <= Date.now()) scheduleNextBeatLogo()
-    if (!monitorProc.running) monitorProc.running = true
+    refreshStatus()
+  }
+
+  function refreshStatus() {
+    if (statusProc.running) return
+    statusProc.running = true
+  }
+
+  function applyStatus(exitCode) {
+    if (exitCode !== 0) {
+      statusKnown = true
+      statusPayload = ({ ready: false, reasons: ["Blackdrop could not read its setup status on this machine."] })
+      if (sessionEnabled) statusTimer.restart()
+      return
+    }
+    try {
+      var parsed = JSON.parse(String(statusOut.text || ""))
+      if (!parsed || parsed.schema !== 1 || typeof parsed.checks !== "object"
+          || parsed.checks === null || !Array.isArray(parsed.reasons)) {
+        statusKnown = true
+        statusPayload = ({ ready: false, reasons: ["Blackdrop's setup probe returned an unsupported schema."] })
+        if (sessionEnabled) statusTimer.restart()
+        return
+      }
+      statusPayload = parsed
+      statusKnown = true
+      if (parsed.ready === true) {
+        lastError = ""
+        statusTimer.stop()
+        if (!monitorProc.running) monitorProc.running = true
+      } else if (sessionEnabled) {
+        statusTimer.restart()
+      }
+    } catch (error) {
+      statusKnown = true
+      statusPayload = ({ ready: false, reasons: ["Blackdrop's setup probe returned invalid JSON."] })
+      if (sessionEnabled) statusTimer.restart()
+    }
+  }
+
+  function openSetupTerminal() {
+    if (!setupAvailable || setupProcess.running) return false
+    setupProcess.command = [
+      "/usr/bin/omarchy-launch-floating-terminal-with-presentation",
+      root.pluginDir + "/setup.sh"
+    ]
+    setupProcess.running = true
+    setupLaunched = true
+    return true
+  }
+
+  function copySetupCommand() {
+    if (!setupCommand) return false
+    Quickshell.execDetached(["bash", "-c", "printf %s " + Util.shellQuote(setupCommand) + " | wl-copy"])
+    copiedCommand = true
+    copiedReset.restart()
+    return true
   }
 
   function stopSession() {
@@ -66,6 +140,8 @@ Item {
     stopVisualizerTimer.stop()
     monitorRestartTimer.stop()
     visualizerRestartTimer.stop()
+    statusTimer.stop()
+    copiedReset.stop()
     if (visualizerProc.running) visualizerProc.running = false
     if (monitorProc.running) monitorProc.running = false
   }
@@ -224,6 +300,12 @@ Item {
   Process {
     id: visualizerProc
     command: [root.pluginDir + "/scripts/run-projectm.sh"]
+    stderr: SplitParser {
+      onRead: function(data) {
+        var line = String(data || "").trim()
+        if (line.indexOf("Blackdrop:") === 0) root.lastError = line
+      }
+    }
     onRunningChanged: {
       if (running) readyTimer.restart()
       else {
@@ -278,12 +360,60 @@ Item {
     onTriggered: root.startVisualizer()
   }
 
+  Process {
+    id: setupProcess
+    command: [root.pluginDir + "/setup.sh"]
+    onExited: function(exitCode) {
+      root.lastError = exitCode === 0 ? "" : "setup exited " + exitCode
+      statusRetry.restart()
+    }
+  }
+
+  Process {
+    id: statusProc
+    command: ["python3", root.pluginDir + "/scripts/status.py", "--json"]
+    stdout: StdioCollector {
+      id: statusOut
+      waitForEnd: true
+    }
+    stderr: StdioCollector {
+      waitForEnd: true
+    }
+    onExited: function(exitCode) { root.applyStatus(exitCode) }
+  }
+
+  Timer {
+    id: statusTimer
+    interval: 3000
+    repeat: true
+    onTriggered: root.refreshStatus()
+  }
+
+  Timer {
+    id: statusRetry
+    interval: 800
+    repeat: false
+    onTriggered: root.refreshStatus()
+  }
+
+  Timer {
+    id: copiedReset
+    interval: 2000
+    repeat: false
+    onTriggered: root.copiedCommand = false
+  }
+
   IpcHandler {
     target: root.pluginId
 
     function status(): string {
       return JSON.stringify({
         sessionEnabled: root.sessionEnabled,
+        ready: root.ready,
+        setupRequired: root.setupRequired,
+        setupReasons: root.setupReasons,
+        setupCommand: root.setupCommand,
+        setupAvailable: root.setupAvailable,
         signalActive: root.signalActive,
         sinkMonitor: root.sinkMonitor,
         monitorRunning: root.monitorRunning,
@@ -299,6 +429,15 @@ Item {
         nextLogoAtMs: root.nextLogoAtMs,
         lastError: root.lastError
       })
+    }
+
+    function setupStatus(): string {
+      root.refreshStatus()
+      return JSON.stringify(root.statusPayload)
+    }
+
+    function openSetup(): string {
+      return root.openSetupTerminal() ? "ok" : "unavailable"
     }
 
     function start(): string {

@@ -2,9 +2,19 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+plugin_dir="$(cd -- "$script_dir/.." && pwd)"
 preset_index="${1:-0}"
 output_name="${2:-}"
 [[ "$preset_index" =~ ^[0-9]+$ ]] || preset_index=0
+
+# A marketplace install only clones the plugin; the projectM packages and the
+# one-time local setup are a separate, visible user action. Fail with an
+# instruction the overlay can show instead of a bare 127.
+if ! command -v projectM-pulseaudio >/dev/null 2>&1; then
+  printf 'Blackdrop: the projectM packages are not installed. Run %s/setup.sh to finish setup.\n' "$plugin_dir" >&2
+  exit 69
+fi
+
 child=""
 helper=""
 cleanup() {

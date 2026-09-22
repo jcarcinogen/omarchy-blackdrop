@@ -24,8 +24,46 @@ Item {
   readonly property int presetRevision: session ? Number(session.presetRevision || 0) : 0
   readonly property string currentPresetName: session ? String(session.currentPresetName || "") : ""
   readonly property bool silent: !signalActive || !visualizerReady
+  readonly property bool setupRequired: session ? session.setupRequired === true : false
+  readonly property var setupReasons: session && session.setupReasons ? session.setupReasons : []
+  readonly property string setupCommand: session ? String(session.setupCommand || "") : ""
+  readonly property bool setupAvailable: session ? session.setupAvailable === true : false
+  readonly property bool setupLaunched: session ? session.setupLaunched === true : false
+  readonly property bool copiedCommand: session ? session.copiedCommand === true : false
   property bool showPresetLogo: false
   property bool showPresetInfo: false
+
+  component SetupButton: Rectangle {
+    id: setupButton
+    property string label: ""
+    property bool emphasized: false
+    signal triggered()
+
+    width: parent ? parent.width : 240
+    height: 40
+    radius: Math.max(8, Style.cornerRadius)
+    color: setupButton.emphasized
+      ? Color.accent
+      : Qt.rgba(1, 1, 1, setupMouse.containsMouse ? 0.16 : 0.09)
+
+    Text {
+      anchors.centerIn: parent
+      text: setupButton.label
+      textFormat: Text.PlainText
+      color: setupButton.emphasized ? Color.background : Color.foreground
+      font.family: Style.font.family
+      font.pixelSize: Style.font.body
+      font.weight: Font.DemiBold
+    }
+
+    MouseArea {
+      id: setupMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: setupButton.triggered()
+    }
+  }
 
   function startService() {
     if (session && session.startSession) session.startSession(activeOutput)
@@ -161,7 +199,7 @@ Item {
 
         Image {
           id: brandIcon
-          visible: panel.visible && root.silent
+          visible: panel.visible && root.silent && !root.setupRequired
           source: Qt.resolvedUrl("assets/omarchy-logo.svg")
           sourceSize.width: 192
           sourceSize.height: 192
@@ -279,12 +317,149 @@ Item {
 
         MouseArea {
           anchors.fill: parent
+          visible: !root.setupRequired
+          enabled: !root.setupRequired
           acceptedButtons: Qt.AllButtons
           hoverEnabled: true
           cursorShape: Qt.BlankCursor
           onPressed: function(mouse) { mouse.accepted = true }
           onReleased: function(mouse) { mouse.accepted = true }
           onWheel: function(wheel) { wheel.accepted = true }
+        }
+
+        // A marketplace install only clones the plugin. Rather than showing a
+        // black screen with no explanation, say exactly what is missing and
+        // offer the one visible step that fixes it.
+        Rectangle {
+          id: setupCard
+          visible: root.setupRequired
+          z: 20
+          anchors.centerIn: parent
+          width: Math.min(620, parent.width - 96)
+          height: Math.min(setupColumn.implicitHeight + 56, parent.height - 96)
+          radius: Math.max(10, Style.cornerRadius)
+          color: "#F5000000"
+          border.width: 1
+          border.color: "#9ece6a"
+
+          Column {
+            id: setupColumn
+            anchors {
+              left: parent.left
+              right: parent.right
+              top: parent.top
+              leftMargin: 28
+              rightMargin: 28
+              topMargin: 28
+            }
+            spacing: 14
+
+            Text {
+              width: parent.width
+              text: "Blackdrop Setup Required"
+              textFormat: Text.PlainText
+              color: "#9ece6a"
+              font.family: Style.font.family
+              font.pixelSize: Style.font.title
+              font.weight: Font.Bold
+            }
+
+            Text {
+              width: parent.width
+              text: "The plugin is installed. projectM and Blackdrop's one-time configuration are installed by you, in one visible step. Blackdrop never changes your configuration on its own."
+              textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
+              color: Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+            }
+
+            Text {
+              width: parent.width
+              visible: root.setupReasons.length > 0
+              text: "Still needed:\n" + root.setupReasons.map(function(item) { return "• " + item }).join("\n")
+              textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
+              color: Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+            }
+
+            Rectangle {
+              width: parent.width
+              height: commandText.implicitHeight + 24
+              radius: Math.max(6, Style.cornerRadius)
+              color: Qt.rgba(1, 1, 1, 0.08)
+              border.width: 1
+              border.color: Qt.rgba(0.62, 0.81, 0.42, 0.5)
+
+              Text {
+                id: commandText
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                anchors.topMargin: 12
+                text: root.setupCommand
+                textFormat: Text.PlainText
+                wrapMode: Text.WrapAnywhere
+                color: Color.foreground
+                font.family: Style.font.family
+                font.pixelSize: Style.font.caption
+              }
+            }
+
+            Text {
+              width: parent.width
+              visible: root.setupLaunched
+              text: "Finish the setup in the terminal window that just opened. This card clears itself as soon as everything is in place."
+              textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
+              color: "#9ece6a"
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+            }
+
+            Column {
+              width: parent.width
+              spacing: 8
+
+              SetupButton {
+                visible: root.setupAvailable
+                label: "Open Setup Terminal"
+                emphasized: true
+                onTriggered: {
+                  if (root.session && root.session.openSetupTerminal) root.session.openSetupTerminal()
+                }
+              }
+
+              SetupButton {
+                label: root.copiedCommand ? "Copied to clipboard" : "Copy setup command"
+                onTriggered: {
+                  if (root.session && root.session.copySetupCommand) root.session.copySetupCommand()
+                }
+              }
+
+              SetupButton {
+                label: "Close"
+                onTriggered: root.close()
+              }
+            }
+
+            Text {
+              width: parent.width
+              text: root.setupAvailable
+                ? "Setup adds the Super+Shift+B toggle and the projectM window rules to your Hyprland configuration and points projectM at Blackdrop's curated presets. The plugin's uninstall.sh reverses both. Press Escape to return to the desktop."
+                : "Open a terminal and run the command above. It adds the Super+Shift+B toggle and the projectM window rules to your Hyprland configuration and points projectM at Blackdrop's curated presets. Press Escape to return to the desktop."
+              textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
+              color: Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              opacity: 0.75
+            }
+          }
         }
       }
 
