@@ -432,8 +432,12 @@ Item {
     }
 
     function setupStatus(): string {
-      root.refreshStatus()
       return JSON.stringify(root.statusPayload)
+    }
+
+    function refreshSetup(): string {
+      root.refreshStatus()
+      return "ok"
     }
 
     function openSetup(): string {

@@ -107,6 +107,18 @@ class MarketplaceContractTests(unittest.TestCase):
         # The setup card must not be behind the click-swallowing visualizer area.
         self.assertIn("visible: !root.setupRequired", text)
 
+    def test_setup_action_steps_the_overlay_aside(self):
+        """A layer-shell Overlay always sits above ordinary windows.
+
+        Launching the setup terminal without hiding the overlay first leaves the
+        whole hand-off invisible, which is the bug this contract pins down.
+        """
+        text = (ROOT / "Overlay.qml").read_text(encoding="utf-8")
+        self.assertIn("WlrLayershell.layer: WlrLayer.Overlay", text)
+        self.assertIn("function dismiss()", text)
+        self.assertIn("shell.hide(pluginId)", text)
+        self.assertIn("if (root.session.openSetupTerminal()) root.dismiss()", text)
+
     def test_service_probe_path_is_wired(self):
         text = (ROOT / "Service.qml").read_text(encoding="utf-8")
         self.assertIn("scripts/status.py", text)

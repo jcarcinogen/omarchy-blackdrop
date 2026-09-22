@@ -28,7 +28,6 @@ Item {
   readonly property var setupReasons: session && session.setupReasons ? session.setupReasons : []
   readonly property string setupCommand: session ? String(session.setupCommand || "") : ""
   readonly property bool setupAvailable: session ? session.setupAvailable === true : false
-  readonly property bool setupLaunched: session ? session.setupLaunched === true : false
   readonly property bool copiedCommand: session ? session.copiedCommand === true : false
   property bool showPresetLogo: false
   property bool showPresetInfo: false
@@ -87,6 +86,14 @@ Item {
     opened = false
     serviceRetry.stop()
     if (session && session.stopSession) session.stopSession()
+  }
+
+  // Hiding the plugin matters here: the overlay is a layer-shell Overlay, so it
+  // always sits above ordinary windows. A setup terminal launched underneath it
+  // would be invisible, so the overlay steps out of the way first.
+  function dismiss() {
+    close()
+    if (shell && typeof shell.hide === "function") shell.hide(pluginId)
   }
 
   function toggle() {
@@ -410,17 +417,6 @@ Item {
               }
             }
 
-            Text {
-              width: parent.width
-              visible: root.setupLaunched
-              text: "Finish the setup in the terminal window that just opened. This card clears itself as soon as everything is in place."
-              textFormat: Text.PlainText
-              wrapMode: Text.WordWrap
-              color: "#9ece6a"
-              font.family: Style.font.family
-              font.pixelSize: Style.font.caption
-            }
-
             Column {
               width: parent.width
               spacing: 8
@@ -430,7 +426,10 @@ Item {
                 label: "Open Setup Terminal"
                 emphasized: true
                 onTriggered: {
-                  if (root.session && root.session.openSetupTerminal) root.session.openSetupTerminal()
+                  if (!root.session || !root.session.openSetupTerminal) return
+                  // Only step aside once the terminal is actually on its way;
+                  // a missing launcher keeps the card and its copy fallback up.
+                  if (root.session.openSetupTerminal()) root.dismiss()
                 }
               }
 
