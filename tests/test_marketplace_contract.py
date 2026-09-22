@@ -157,6 +157,17 @@ class MarketplaceContractTests(unittest.TestCase):
         # strand projectM on a silent device mid-session.
         self.assertIn("align_capture(next_monitor)", text)
 
+    def test_launcher_aligns_the_capture_as_soon_as_projectm_starts(self):
+        """projectM's idle logo screen is what a silent input looks like.
+
+        The watcher's two-second loop is enough for device changes after launch,
+        so the launcher also aligns once, the moment projectM's stream exists.
+        """
+        text = (ROOT / "scripts/run-projectm.sh").read_text(encoding="utf-8")
+        self.assertIn('audio-watch.py" --align-once', text)
+        # The alignment runs detached: it can never hold up or fail the launcher.
+        self.assertIn(">/dev/null 2>&1 &", text)
+
 
 if __name__ == "__main__":
     unittest.main()

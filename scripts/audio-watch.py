@@ -38,8 +38,8 @@ def emit(message: str) -> None:
     print(message, flush=True)
 
 
-def default_monitor() -> str:
-    result = subprocess.run(
+def default_monitor(run=subprocess.run) -> str:
+    result = run(
         ["pactl", "get-default-sink"],
         check=True,
         capture_output=True,
@@ -175,6 +175,24 @@ def rms_f32(chunk: bytes) -> float:
     return math.sqrt(sum(sample * sample for sample in samples) / len(samples))
 
 
+def align_once(attempts: int = 12, pause: float = 1.0, run=subprocess.run) -> int:
+    """Align once for the launcher: projectM's capture appears after it starts.
+
+    Exit status is advisory; the launcher must never fail because the audio
+    server was slow to show the stream.
+    """
+    for attempt in range(attempts):
+        try:
+            monitor = default_monitor(run)
+        except Exception as exc:
+            emit("capture-error:" + str(exc).replace("\n", " ")[:200])
+            return 1
+        if align_capture(monitor, run=run) or attempt == attempts - 1:
+            return 0
+        time.sleep(pause)
+    return 0
+
+
 def main() -> int:
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
@@ -267,4 +285,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--align-once" in sys.argv[1:]:
+        raise SystemExit(align_once())
     raise SystemExit(main())

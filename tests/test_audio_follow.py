@@ -20,6 +20,7 @@ MONITOR = (
     "alsa_output.usb-Apple__Inc._USB-C_to_3.5mm_Headphone_Jack_Adapter_DWH53260DPY2FN3AQ-00"
     ".analog-stereo.monitor"
 )
+SINK = MONITOR[: -len(".monitor")]
 HEADSET = "alsa_input.pci-0000_00_1f.3-platform-sof_sdw.HiFi__Headset__source"
 
 SOURCES = [
@@ -65,17 +66,20 @@ def load_watcher():
 class FakeRun:
     """Stands in for subprocess.run and records the commands that were issued."""
 
-    def __init__(self, streams, sources=None, fail_on=()):
+    def __init__(self, streams, sources=None, fail_on=(), sink=SINK):
         self.streams = streams
         self.sources = SOURCES if sources is None else sources
         self.fail_on = fail_on
+        self.sink = sink
         self.calls = []
 
     def __call__(self, argv, **_kwargs):
         self.calls.append(list(argv))
         if argv in self.fail_on:
             raise RuntimeError("pactl: command failed")
-        if argv[3:] == ["list", "source-outputs"]:
+        if argv[1:] == ["get-default-sink"]:
+            stdout = self.sink + "\n"
+        elif argv[3:] == ["list", "source-outputs"]:
             stdout = json.dumps(self.streams)
         elif argv[3:] == ["list", "sources"]:
             stdout = json.dumps(self.sources)
@@ -86,6 +90,10 @@ class FakeRun:
     @property
     def moves(self):
         return [call for call in self.calls if call[:2] == ["pactl", "move-source-output"]]
+
+    @property
+    def listings(self):
+        return [call for call in self.calls if call[3:] == ["list", "source-outputs"]]
 
 
 class CaptureAlignmentTests(unittest.TestCase):
@@ -155,6 +163,29 @@ class CaptureAlignmentTests(unittest.TestCase):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             self.assertEqual(self.watcher.align_capture(MONITOR, run=run), [])
+        self.assertIn("capture-error:", out.getvalue())
+
+    def test_align_once_stops_as_soon_as_the_capture_is_moved(self):
+        run = FakeRun([PROJECTM_ON_HEADSET])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(self.watcher.align_once(attempts=6, pause=0, run=run), 0)
+        self.assertEqual(run.moves, [["pactl", "move-source-output", "7640", MONITOR]])
+        self.assertEqual(len(run.listings), 1)
+
+    def test_align_once_gives_up_after_its_attempts(self):
+        run = FakeRun([PROJECTM_ON_MONITOR])  # already correct: nothing to move
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(self.watcher.align_once(attempts=3, pause=0, run=run), 0)
+        self.assertEqual(run.moves, [])
+        self.assertEqual(len(run.listings), 3)
+
+    def test_align_once_reports_a_missing_audio_server(self):
+        run = FakeRun([], fail_on=[["pactl", "get-default-sink"]])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(self.watcher.align_once(attempts=2, pause=0, run=run), 1)
         self.assertIn("capture-error:", out.getvalue())
 
 

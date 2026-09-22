@@ -34,6 +34,10 @@ printf 'Blackdrop: projectM FPS=%s output=%s\n' "$fps" "${output_name:-focused}"
 
 projectM-pulseaudio &
 child=$!
+# projectM renders its own logo screen whenever its input is silent, and it
+# remembers a capture target from an earlier session. Put it on the device that
+# is actually playing as soon as its capture stream appears.
+"$script_dir/audio-watch.py" --align-once >/dev/null 2>&1 &
 (
   "$script_dir/wait-projectm.py" "$child"
   sleep 0.2
