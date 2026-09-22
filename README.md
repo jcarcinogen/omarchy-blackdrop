@@ -56,7 +56,7 @@ Blackdrop requires Omarchy 4 Quattro plus the repository `projectm` and `project
 1. the repository `projectm` and `projectm-pulseaudio` packages that provide the visualization window;
 2. Blackdrop’s reversible local configuration — the curated preset path, the **Super+Shift+B** toggle, and the projectM window rules.
 
-Nothing in your configuration changes until you run that visible step. Blackdrop itself never asks for elevated privileges; the package step goes through Omarchy’s own `omarchy-pkg-add`, which authorizes in the normal pacman flow. The card clears itself as soon as setup succeeds.
+Nothing in your configuration changes until you run that visible step. Blackdrop itself never asks for elevated privileges; the package step goes through Omarchy’s own `omarchy-pkg-add`, which authorizes in the normal pacman flow. Blackdrop steps aside while the setup terminal is open, so that window is never hidden behind the overlay — reopen Blackdrop afterwards and it goes straight to the visualizer once setup succeeded.
 
 To do the same thing by hand:
 
