@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-CONFIG = Path.home() / ".config/projectM/config.inp"
+CONFIG = Path.home() / ".projectM/config.inp"
 
 
 def refresh_for_monitor(monitor: dict) -> int:
@@ -32,16 +32,24 @@ def choose_monitor(monitors: list[dict], requested: str) -> dict:
 
 
 def update_config(path: Path, fps: int) -> bool:
-    """Rewrite the FPS line in place. Returns False when projectM is not set up yet."""
+    """Rewrite the FPS line in place. Returns False when projectM is not set up yet.
+
+    Only that one line changes: every other byte stays, including the file's own
+    line endings, so this can run on each launch without churning projectM's
+    configuration.
+    """
     if not path.is_file():
         return False
-    text = path.read_text()
-    replacement = f"FPS  = {fps}                 # Frames Per Second"
-    text, count = re.subn(r"(?m)^FPS\s*=\s*\d+.*$", replacement, text, count=1)
+    data = path.read_bytes()
+    replacement = f"FPS  = {fps}                 # Frames Per Second".encode()
+    data, count = re.subn(rb"(?m)^FPS\s*=[^\r\n]*", replacement, data, count=1)
     if count != 1:
-        text += "\n" + replacement + "\n"
+        ending = b"\r\n" if b"\r\n" in data else b"\n"
+        if data and not data.endswith((b"\n", b"\r")):
+            data += ending
+        data += replacement + ending
     temporary = path.with_suffix(".tmp")
-    temporary.write_text(text)
+    temporary.write_bytes(data)
     temporary.chmod(path.stat().st_mode)
     temporary.replace(path)
     return True

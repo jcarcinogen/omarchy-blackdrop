@@ -20,7 +20,8 @@ from pathlib import Path
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
 PRESETS_DIR = PLUGIN_DIR / "presets"
-USER_CONFIG = Path.home() / ".config/projectM/config.inp"
+# The path projectM opens itself, so this is the only place our settings count.
+USER_CONFIG = Path.home() / ".projectM/config.inp"
 BASE_CONFIG = Path("/usr/share/projectM/config.inp")
 BINDINGS = Path.home() / ".config/hypr/bindings.lua"
 STATE_DIR = Path.home() / ".local/state/blackdrop"

@@ -39,7 +39,7 @@ class FreshMarketplaceInstallTests(unittest.TestCase):
         self.addCleanup(self._tmp.cleanup)
         self.home = Path(self._tmp.name)
         self.module = load_status()
-        self.module.USER_CONFIG = self.home / ".config/projectM/config.inp"
+        self.module.USER_CONFIG = self.home / ".projectM/config.inp"
         self.module.BINDINGS = self.home / ".config/hypr/bindings.lua"
         self.module.STATE_MARKER = self.home / ".local/state/blackdrop/applied"
         self.module.BASE_CONFIG = self.home / "no-such-projectm-base"
@@ -96,7 +96,7 @@ class PreparedMachineTests(unittest.TestCase):
         base = self.home / "projectm-base.inp"
         base.write_text("FPS  = 60\nPreset Path = /usr/share/projectM/presets\n", encoding="utf-8")
 
-        config = self.home / ".config/projectM/config.inp"
+        config = self.home / ".projectM/config.inp"
         config.parent.mkdir(parents=True)
         config.write_text(f"Preset Path = {ROOT / 'presets'}\n", encoding="utf-8")
 

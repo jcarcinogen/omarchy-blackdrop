@@ -127,6 +127,36 @@ class MarketplaceContractTests(unittest.TestCase):
         # Nothing may start the visualizer before the probe says the machine is ready.
         self.assertIn("if (!monitorProc.running) monitorProc.running = true", text)
 
+    def test_every_file_agrees_on_the_config_path_projectm_opens(self):
+        """Regression: earlier versions wrote ``~/.config/projectM/config.inp``.
+
+        projectM reports opening ``~/.projectM/config.inp``, so the curated preset
+        path never reached the renderer and the plugin showed projectM's stock
+        logo screen instead of a preset.
+        """
+        for relative in (
+            "install-local.py",
+            "remove-local.py",
+            "scripts/status.py",
+            "scripts/set_projectm_fps.py",
+        ):
+            with self.subTest(path=relative):
+                text = (ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn('".projectM/config.inp"', text)
+                for line in text.splitlines():
+                    if '".config/projectM/config.inp"' in line:
+                        self.assertIn(
+                            "LEGACY", line, f"{relative}: only the retirement path may name the old file"
+                        )
+
+    def test_watcher_keeps_projectm_on_the_playing_sink(self):
+        text = (ROOT / "scripts/audio-watch.py").read_text(encoding="utf-8")
+        self.assertIn("def align_capture(", text)
+        self.assertIn("move-source-output", text)
+        # Re-applied on every sink check, so plugging in headphones cannot
+        # strand projectM on a silent device mid-session.
+        self.assertIn("align_capture(next_monitor)", text)
+
 
 if __name__ == "__main__":
     unittest.main()
